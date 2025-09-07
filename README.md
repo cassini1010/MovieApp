@@ -119,3 +119,106 @@ services:
         - action: rebuild
           path: ./backend/Dockerfile
 ```
+
+### DB setup
+
+#### **Step 1: Add Postgres and Adminer to Docker Compose**
+
+Update the `docker-compose.yml` file to include Postgres and Adminer:
+
+```yml
+version: "3"
+
+services:
+  db:
+    image: postgres
+    restart: always
+    # set shared memory limit when using docker \
+    shm_size: 128mb
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    # environment:
+    #   - POSTGRES_USER=${DB_USER}
+    #   - POSTGRES_PASSWORD=${DB_USER_PASSWORD}
+    volumes: 
+      - db:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080 
+volumes:
+  db:
+```
+
+#### **Step 2: Start Compose Services**
+
+Run the following command to start the services:
+
+```bash
+docker-compose up -d
+```
+
+This will start all the containers in detached mode.
+
+#### **Step 3: Install Alembic and Create Models**
+
+Install Alembic as a dependency:
+
+```bash
+pip install alembic
+```
+
+Create a new file called `models.py` to define your database models using SQLModel ORM:
+
+```python
+from sqlmodel import SQLModel, Field
+
+class User(SQLModel, table=True):
+    id: int = Field primary_key=True
+    name: str
+    email: str
+```
+
+Run the following command to initialize Alembic migrations:
+
+```bash
+alembic init migrations
+```
+
+This will create a new directory called `migrations` and an `alembic.ini` file.
+
+#### **Step 4: Modify Alembic.ini and Generate Migrations**
+
+Modify the `sqlalchemy.url` parameter in `alembic.ini` to match your Postgres database:
+
+```ini
+sqlalchemy.url = postgresql://myuser:myuser@localhost:5432/mydatabase
+```
+
+Run the following command to generate the initial migrations:
+
+```bash
+alembic revision --autogenerate -m "first commit message"
+```
+
+This will create a new directory called `versions` with the initial migration.
+
+#### **Step 5: Upgrade to Latest Migration and Verify Tables**
+
+Run the following command to upgrade to the latest migration:
+
+```bash
+alembic upgrade head
+```
+
+This will create all the tables in your database.
+
+Login to Postgres via Adminer to verify that the tables have been created:
+
+1. Open a web browser and navigate to `http://localhost:8080`.
+2. Enter the username as "myuser" and password as "myuser".
+3. Connect to the database "mydatabase".

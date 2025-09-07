@@ -7,5 +7,13 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.16.5",
     "fastapi[all]>=0.116.1",
+    "pydantic-settings>=2.10.1",
     "sqlmodel>=0.0.24",
+]
+
+[dependency-groups]
+dev = [
+    "autoimport>=1.6.1",
+    "black>=25.1.0",
+    "isort>=6.0.1",
 ]
