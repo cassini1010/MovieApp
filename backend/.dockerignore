@@ -6,3 +6,4 @@ app.egg-info
 .coverage
 htmlcov
 .venv
+create_admin_user.py

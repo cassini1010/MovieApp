@@ -1,3 +1,7 @@
+create_admin_user.py
+trial.py
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

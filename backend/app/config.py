@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD:str = ""
     POSTGRES_SERVER: str = ""
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ALGORITHM: str = ""
+    SECRET_KEY: str = ""
 
 
     @property
