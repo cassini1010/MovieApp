@@ -1,12 +1,14 @@
+from datetime import timedelta
+from typing import Annotated
+
+from app.config import settings
+from app.database import authenticate, get_db_session
+from app.models import Token
+from app.security import create_access_token
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
-from app.database import get_db_session, authenticate
-from typing import Annotated
-from app.models import Token
-from app.security import create_access_token
-from datetime import timedelta
-from app.config import settings
+
 
 router = APIRouter(tags=["login"])
 
@@ -14,8 +16,8 @@ router = APIRouter(tags=["login"])
 @router.post("/token")
 async def login_access_token(
     session: Annotated[Session, Depends(get_db_session)],
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-                         ) -> Token:
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+) -> Token:
     user = authenticate(
         session=session, username=form_data.username, password=form_data.password
     )

@@ -1,17 +1,11 @@
-from fastapi import APIRouter, Depends, Form, HTTPException
-from app.utils import get_current_user
 from typing import Annotated
-from app.models import (
-    User,
-    MovieCreate,
-    Director,
-    Actor,
-    Genre,
-    Movie,
-    Movie_genre_link,
-    Moive_actors_link,
-)
+
 from app.database import get_db_session
+from app.models import (Actor, Director, Genre, Movie,
+                        MovieCreate, User, MovieResponse)
+from app.utils import get_current_user
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
 
@@ -21,52 +15,60 @@ router = APIRouter(prefix="/movie", tags=["movies"])
 @router.post("/")
 def add_movie(
     movie: MovieCreate,
-    # current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_db_session)],
 ):
-    director = session.exec(
-        select(Director).where(Director.name == movie.director)
-    ).first()
-    if not director:
-        director = Director(name=movie.director)
-        session.add(director)
-        session.flush()
+    if session.exec(select(Movie).where(Movie.title == movie.title)).first():
+        raise HTTPException(
+            status_code=400,
+            detail="The movie with this name already exists in the system.",
+        )
+    new_director = session.exec(select(Director).where(Director.name == movie.director)).first()
+    if not new_director:
+        new_director = Director(name=movie.director)
 
-    db_movie = Movie(
+    new_movie = Movie(
         title=movie.title,
         releaseYear=movie.releaseYear,
-        director_id=director.id,
         summary=movie.summary,
-    )
+        director=new_director
+        )
 
-    # Handle actors
-    for name in movie.actors:
-        actor = session.exec(select(Actor).where(Actor.name == name)).first()
-        if not actor:
-            actor = Actor(name=name)
-            session.add(actor)
-            session.flush()
-        db_movie.actors.append(actor)
+    for actor in movie.actors:
+        existing_actor = session.exec(select(Actor).where(Actor.name == actor)).first()
+        if not existing_actor:
+            existing_actor = Actor(name=actor)
+        new_movie.actors.append(existing_actor)
+    
+    for genre in movie.genres:
+        existing_genre = session.exec(select(Genre).where(Genre.genre_type == genre)).first()
+        if not existing_genre:
+            existing_genre = Genre(genre_type=genre)
+        new_movie.genres.append(existing_genre)
 
-    # Handle genres
-    for name in movie.genres:
-        genre = session.exec(select(Genre).where(Genre.genre_type == name)).first()
-        if not genre:
-            genre = Genre(genre_type=name)
-            session.add(genre)
-            session.flush()
-        db_movie.genres.append(genre)
-
-    session.add(db_movie)
+    session.add(new_movie)
     session.commit()
-    session.refresh(db_movie)
+    
     return movie
 
-
 @router.delete("/{movie_id}")
-def delete_movie(movie_id: int, session: Annotated[Session, Depends(get_db_session)]):
-    movie = session.exec(select(Movie).where(Movie.id == movie_id)).first()
-    if not movie:
-        raise HTTPException(status_code=400, detail="Invalid Movie ID")
-    session.delete(movie)
-    session.commit()
+def delete_movie(
+        movie_id: int,
+        current_user: Annotated[User, Depends(get_current_user)],
+        session: Annotated[Session, Depends(get_db_session)]):
+    try:
+        movie = session.exec(select(Movie).where(Movie.id == movie_id)).one()
+        session.delete(movie)
+        session.commit()
+    except NoResultFound:
+        raise HTTPException(status_code=400, detail="Invalid Movie ID") from None
+    
+
+@router.get("/", response_model=list[MovieResponse])
+def get_movie(
+        session: Annotated[Session, Depends(get_db_session)],
+        limit: int = Query(default=10, ge=0),
+        offset: int = Query(default=0, ge=0)
+        ):
+    movie = session.exec(select(Movie).offset(offset).limit(limit)).all()
+    return movie

@@ -1,31 +1,22 @@
 from typing import Annotated
 from sqlmodel import Field, Relationship, SQLModel
 
-class ActorRead(SQLModel):
-    id: int
-    name: str
-
-class GenreRead(SQLModel):
-    id: int
-    name: str
-
-class DirectorRead(SQLModel):
-    id: int
-    name: str
 
 class MovieResponse(SQLModel):
     title: str
-    # director: DirectorRead
     releaseYear: int
     summary: str|None
-    # actors: list[ActorRead]
-    # genres: list[GenreRead]
+    director: "Director"
+    actors: list["Actor"]
+    genres: list["Genre"]
+    
+
 
 class MovieCreate(SQLModel):
     title: str
     director: str
     releaseYear: int
-    summary: Annotated[str|None, Field(default=None)]
+    summary: str|None
     actors: list[str]
     genres: list[str]
 
@@ -43,7 +34,7 @@ class Movie_genre_link(SQLModel, table=True):
     
 
 class Genre(SQLModel, table=True):
-    id: Annotated[int | None, Field(default=None, primary_key=True)]
+    id: int | None = Field(default=None, primary_key=True)
     genre_type: str
 
     # Relations
@@ -51,7 +42,7 @@ class Genre(SQLModel, table=True):
 
 
 class Actor(SQLModel, table=True):
-    id: Annotated[int | None, Field(default=None, primary_key=True)]
+    id: int | None = Field(default=None, primary_key=True)
     name: str
 
     # Relations
@@ -59,7 +50,7 @@ class Actor(SQLModel, table=True):
 
 
 class Director(SQLModel, table=True):
-    id: Annotated[int | None, Field(default=None, primary_key=True)]
+    id: int | None = Field(default=None, primary_key=True)
     name: str
 
     # Relations
@@ -67,11 +58,11 @@ class Director(SQLModel, table=True):
 
 
 class Movie(SQLModel, table=True):
-    id: Annotated[int | None, Field(default=None, primary_key=True)]
+    id: int | None = Field(default=None, primary_key=True)
     title: str
-    director_id: Annotated[int | None, Field(default=None, foreign_key="director.id")]
+    director_id: int | None = Field(default=None, foreign_key="director.id")
     releaseYear: int
-    summary: Annotated[str | None, Field(default=None)]
+    summary: str | None = Field(default=None)
 
     # Relations
     actors: list[Actor] = Relationship(back_populates="movies", link_model=Moive_actors_link)
