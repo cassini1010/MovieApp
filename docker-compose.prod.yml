@@ -1,0 +1,96 @@
+services:
+  traefik:
+      image: traefik:v3.5
+      command:
+        - "--api.insecure=true"
+        - "--providers.docker=true"
+        - "--entrypoints.web.address=:80"
+      ports:
+        - "80:80"
+        - "8080:8080"
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=movie_network
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      networks:
+        - movie_network
+  db:
+    image: postgres
+    restart: always
+    # set shared memory limit when using docker \
+    shm_size: 128mb
+    ports:
+      - 5432:5432
+    depends_on:
+    - traefik
+    networks:
+      - movie_network
+    env_file:
+      - .env
+    # environment:
+    #   - POSTGRES_USER=${DB_USER}
+    #   - POSTGRES_PASSWORD=${DB_USER_PASSWORD}
+    volumes: 
+      - db:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    # ports:
+    #   - 8081:8080
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=movie_network
+      - "traefik.http.routers.adminer.rule=Host(`adminer.localhost`)"
+    depends_on:
+    - traefik
+    networks:
+      - movie_network
+
+  backend:
+    # Build the image from the Dockerfile in the current directory
+    build: ./backend
+
+    # Host the FastAPI application on port 8000
+    # ports:
+    #   - "8000:8000"
+    depends_on:
+      - db
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=movie_network
+      - "traefik.http.routers.backend.rule=Host(`backend.localhost`)"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SERVER=db
+    networks:
+      - movie_network
+  frontend:
+    build: ./frontend
+    depends_on:
+      - db
+      - traefik
+    # ports:
+    #   - "80:8080"
+    networks:
+      - movie_network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=movie_network
+      - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
+    volumes:
+      - ./frontend:/app
+      - node_modules:/app/node_modules
+    command: npm run serve
+
+volumes:
+  db:
+  node_modules:
+
+networks:
+  movie_network:
+    # Allow setting it to false for testing
+    driver: bridge
