@@ -35,4 +35,4 @@ EXPOSE 8000
 # Run the FastAPI application by default
 # Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
 # Uses `--host 0.0.0.0` to allow access from outside the container
-CMD ["uvicorn", "--reload", "app.main:app", "--port", "8000", "--host", "0.0.0.0"]
+CMD ["uvicorn", "--reload", "app.main:app", "--port", "8000", "--host", "0.0.0.0", "--workers", "4"]
