@@ -196,7 +196,7 @@ This will create a new directory called `migrations` and an `alembic.ini` fi
 Modify the `sqlalchemy.url` parameter in `alembic.ini` to match your Postgres database:
 
 ```ini
-sqlalchemy.url = postgresql://myuser:myuser@localhost:5432/mydatabase
+sqlalchemy.url = postgresql://username:password@localhost:5432/database_name
 ```
 
 Run the following command to generate the initial migrations:

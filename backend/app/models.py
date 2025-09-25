@@ -63,6 +63,7 @@ class Movie(SQLModel, table=True):
     director_id: int | None = Field(default=None, foreign_key="director.id")
     releaseYear: int
     summary: str | None = Field(default=None)
+    thumbnail: str| None = Field(default=None)
 
     # Relations
     actors: list[Actor] = Relationship(back_populates="movies", link_model=Moive_actors_link)
