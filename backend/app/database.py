@@ -1,9 +1,9 @@
 from typing import Any, Generator
 
 from app.config import settings
-from sqlmodel import Session, SQLModel, create_engine, select
 from app.models import User
 from passlib.context import CryptContext
+from sqlmodel import Session, SQLModel, create_engine, select
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 postgres_url = settings.POSTGRES_URL
@@ -19,10 +19,12 @@ def get_db_session() -> Generator[Session, Any, None]:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_user_by_email(*, session: Session, username: str) -> User | None:
     statement = select(User).where(User.username == username)
     session_user = session.exec(statement).first()
     return session_user
+
 
 def authenticate(*, session: Session, username: str, password: str) -> User | None:
     db_user = get_user_by_email(session=session, username=username)

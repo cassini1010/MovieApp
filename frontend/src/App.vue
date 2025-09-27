@@ -1,7 +1,6 @@
 <template>
   <div id="app">
     <h1>Movie</h1>
-
     <!-- Filters -->
     <!-- <div class="filters">
       <input v-model="filters.genre" placeholder="Genre" />
@@ -12,9 +11,20 @@
       <button @click="clearFilters">Clear</button>
     </div> -->
 
-
-
-    <table class="movie-table">
+    <!-- This is for the movie grid view -->
+    <div class="movie-grid">
+      <div v-for="movie in movies" :key="movie.id" class="movie-card">
+        <img :src="`http://backend.localhost/static/${movie.thumbnail}`" alt="thumbnail" class="thumbnail"
+        style="width: 300px; height: auto; border-radius: 8px;" />
+        <div class="movie-details">
+          <h3 class="title">{{ movie.title }}</h3>
+          <p class="year">📅 {{ movie.releaseYear }}</p>
+          <p class="director">🎬 {{ movie.director.name }}</p>
+        </div>
+      </div>
+    </div>
+    <!-- This is for the table view -->
+    <!-- <table class="movie-table">
       <thead>
         <tr>
           <th>Title</th>
@@ -23,6 +33,7 @@
           <th>Director</th>
           <th>Actors</th>
           <th>Genres</th>
+          <th>Thumbnail</th>
         </tr>
       </thead>
       <tbody>
@@ -33,19 +44,21 @@
           <td>{{ movie.director?.name || 'N/A' }}</td>
           <td>{{movie.actors.map(a => a.name).join(", ")}}</td>
           <td>{{movie.genres.map(g => g.genre_type).join(", ")}}</td>
+          <td>
+            <img :src="`http://backend.localhost/static/${movie.thumbnail}`" alt="thumbnail"
+              style="width: 100px; height: auto; border-radius: 8px;" />
+          </td>
         </tr>
       </tbody>
-    </table>
+    </table> -->
+
+
 
     <div>
       <button @click="prevPage" style="margin-right: 10px;">Previous</button>
       <button @click="nextPage">Next</button>
     </div>
-
-
-
   </div>
-  <router-view />
 </template>
 
 
@@ -111,6 +124,50 @@ export default {
 
 
 <style lang="scss">
+
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.movie-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.movie-card:hover {
+  transform: translateY(-5px);
+}
+
+.thumbnail {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+}
+
+.movie-details {
+  padding: 10px;
+  text-align: center;
+}
+
+.title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 8px 0 4px;
+}
+
+.year,
+.director {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+
 .pagination-container {
   display: flex;
 

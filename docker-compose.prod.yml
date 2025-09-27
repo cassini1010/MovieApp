@@ -1,20 +1,22 @@
 services:
   traefik:
-      image: traefik:v3.5
-      command:
-        - "--api.insecure=true"
-        - "--providers.docker=true"
-        - "--entrypoints.web.address=:80"
-      ports:
-        - "80:80"
-        - "8080:8080"
-      labels:
-        - traefik.enable=true
-        - traefik.docker.network=movie_network
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
-      networks:
-        - movie_network
+    image: traefik:v3.5
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=movie_network
+      - "traefik.http.routers.dashboard.rule=Host(`dashboard.localhost`)"
+      - "traefik.http.routers.dashboard.entrypoints=web"
+      - "traefik.http.routers.dashboard.service=api@internal"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - movie_network
   db:
     image: postgres
     restart: always
@@ -23,41 +25,34 @@ services:
     ports:
       - 5432:5432
     depends_on:
-    - traefik
+      - traefik
     networks:
       - movie_network
     env_file:
       - .env
-    # environment:
-    #   - POSTGRES_USER=${DB_USER}
-    #   - POSTGRES_PASSWORD=${DB_USER_PASSWORD}
-    volumes: 
+    volumes:
       - db:/var/lib/postgresql/data
 
   adminer:
-    image: adminer
+    image: adminer:5-standalone
     restart: always
-    # ports:
-    #   - 8081:8080
     labels:
       - traefik.enable=true
       - traefik.docker.network=movie_network
       - "traefik.http.routers.adminer.rule=Host(`adminer.localhost`)"
     depends_on:
-    - traefik
+      - traefik
+      - db
     networks:
       - movie_network
 
   backend:
     # Build the image from the Dockerfile in the current directory
     build: ./backend
-
-    # Host the FastAPI application on port 8000
-    # ports:
-    #   - "8000:8000"
     depends_on:
-      - db
       - traefik
+      - db
+      - adminer
     labels:
       - traefik.enable=true
       - traefik.docker.network=movie_network
@@ -66,15 +61,33 @@ services:
       - .env
     environment:
       - POSTGRES_SERVER=db
+    volumes:
+      - ./static:/app/static
     networks:
       - movie_network
+    develop:
+      # Create a `watch` configuration to update the app
+      # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
+      watch:
+        # Sync the working directory with the `/app` directory in the container
+        - action: sync
+          path: ./backend
+          target: /app
+          # Exclude the project virtual environment — it could be for a
+          # different platform in the container
+          ignore:
+            - ./backend/.venv
+
+        # Rebuild the image if dependencies change by checking uv.lock
+        - action: rebuild
+          path: ./backend/uv.lock
+
+        - action: rebuild
+          path: ./backend/Dockerfile
   frontend:
     build: ./frontend
     depends_on:
-      - db
-      - traefik
-    # ports:
-    #   - "80:8080"
+      - backend
     networks:
       - movie_network
     labels:
@@ -92,5 +105,4 @@ volumes:
 
 networks:
   movie_network:
-    # Allow setting it to false for testing
     driver: bridge
