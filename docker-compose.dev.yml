@@ -19,7 +19,7 @@ services:
     networks:
       - movie_network
   db:
-    image: postgres
+    image: postgres:alpine
     restart: always
     # set shared memory limit when using docker \
     shm_size: 128mb
@@ -108,12 +108,12 @@ services:
       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
     volumes:
       - ./frontend:/app
-      - node_modules:/app/node_modules
+      # - node_modules:/app/node_modules
     command: npm run serve
 
 volumes:
   db:
-  node_modules:
+  # node_modules:
 
 networks:
   movie_network:

@@ -1,6 +1,10 @@
 # Install uv
-FROM python:3.13-slim
+FROM python:3.13-alpine
 COPY --from=ghcr.io/astral-sh/uv:0.7.3 /uv /uvx /bin/
+
+# Setup a non-root user
+# Create a group and user
+RUN addgroup -S fastgroup && adduser -S fastuser -G fastgroup
 
 # Install the project into `/app`
 WORKDIR /app
@@ -32,6 +36,9 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 EXPOSE 8000
+
+
+USER fastuser
 # Run the FastAPI application by default
 # Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
 # Uses `--host 0.0.0.0` to allow access from outside the container
