@@ -18,9 +18,8 @@ services:
     networks:
       - movie_network
   db:
-    image: postgres
+    image: postgres:alpine
     restart: always
-    # set shared memory limit when using docker \
     shm_size: 128mb
     ports:
       - 5432:5432
@@ -47,7 +46,6 @@ services:
       - movie_network
 
   backend:
-    # Build the image from the Dockerfile in the current directory
     build: ./backend
     depends_on:
       - traefik
@@ -65,25 +63,6 @@ services:
       - ./static:/app/static
     networks:
       - movie_network
-    develop:
-      # Create a `watch` configuration to update the app
-      # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
-      watch:
-        # Sync the working directory with the `/app` directory in the container
-        - action: sync
-          path: ./backend
-          target: /app
-          # Exclude the project virtual environment — it could be for a
-          # different platform in the container
-          ignore:
-            - ./backend/.venv
-
-        # Rebuild the image if dependencies change by checking uv.lock
-        - action: rebuild
-          path: ./backend/uv.lock
-
-        - action: rebuild
-          path: ./backend/Dockerfile
   frontend:
     build: ./frontend
     depends_on:
@@ -96,13 +75,11 @@ services:
       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
     volumes:
       - ./frontend:/app
-      - node_modules:/app/node_modules
     command: npm run serve
 
 volumes:
   db:
-  node_modules:
-
+  
 networks:
   movie_network:
     driver: bridge
