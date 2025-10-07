@@ -1,6 +1,8 @@
 import uuid
 from pathlib import Path
 from typing import Annotated
+import os
+import string
 
 from app.config import settings
 from app.database import get_db_session
@@ -19,17 +21,20 @@ async def add_movie(
     title: Annotated[str, Form()],
     director: Annotated[str, Form()],
     releaseYear: Annotated[int, Form()],
-    actors: Annotated[list[str], Form()],
-    genres: Annotated[list[str], Form()],
+    actors: Annotated[str, Form()],
+    genres: Annotated[str, Form()],
     summary: str | None = Form(default=None),
     thumbnail: UploadFile | None = None,
 ):
+    title = string.capwords(title)
     if session.exec(select(Movie).where(Movie.title == title)).first():
         raise HTTPException(
             status_code=400,
             detail="The movie with this name already exists in the system.",
         )
-    new_director = session.exec(
+    
+    director = string.capwords(director)
+    new_director: Director | None = session.exec(
         select(Director).where(Director.name == director)
     ).first()
     if not new_director:
@@ -41,14 +46,17 @@ async def add_movie(
         summary=summary,
         director=new_director,
     )
-
+    actors = actors.split(",")
     for actor in actors:
+        actor = string.capwords(actor)
         existing_actor = session.exec(select(Actor).where(Actor.name == actor)).first()
         if not existing_actor:
             existing_actor = Actor(name=actor)
         new_movie.actors.append(existing_actor)
 
+    genres = genres.split(",")
     for genre in genres:
+        genre = string.capwords(genre)
         existing_genre = session.exec(
             select(Genre).where(Genre.genre_type == genre)
         ).first()
@@ -84,8 +92,12 @@ def delete_movie(
 ):
     try:
         movie = session.exec(select(Movie).where(Movie.id == movie_id)).one()
+        settings.STATIC_DIRECTORY.joinpath(movie.thumbnail)
+        if os.path.exists(settings.STATIC_DIRECTORY.joinpath(movie.thumbnail)):
+            os.remove(settings.STATIC_DIRECTORY.joinpath(movie.thumbnail))
         session.delete(movie)
         session.commit()
+
     except NoResultFound:
         raise HTTPException(status_code=400, detail="Invalid Movie ID") from None
 
@@ -98,33 +110,3 @@ def get_movie(
 ):
     movie = session.exec(select(Movie).offset(offset).limit(limit)).all()
     return movie
-
-
-# @router.put("/{movie_id}")
-# async def update_movie(
-#     session: Annotated[Session, Depends(get_db_session)],
-#     movie_id: int,
-#     thumbnail: UploadFile | None = None,
-# ):
-#     try:
-#         movie = session.exec(select(Movie).where(Movie.id == movie_id)).one()
-#         if thumbnail:
-#             filename = thumbnail.filename
-#             if filename.endswith(("jpg", "jpeg", "png")):
-#                 with open(
-#                     r".static\{}.jpg".format(thumbnail_name := uuid.uuid4()), "wb"
-#                 ) as fp:
-#                     fp.write(await thumbnail.read())
-#                 movie.thumbnail = str(thumbnail_name) + ".{}".format(
-#                     thumbnail.filename.split(".")[-1]
-#                 )
-#             else:
-#                 raise HTTPException(
-#                     status_code=400,
-#                     detail="Wrong file type",
-#                 )
-#             session.add(movie)
-#             session.commit()
-
-#     except NoResultFound:
-#         raise HTTPException(status_code=400, detail="Invalid Movie ID") from None

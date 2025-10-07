@@ -1,3 +1,9 @@
 node_modules
 dist
-npm-debug.log
+.env
+*.log
+.vscode
+.git
+__pycache__
+*.pyc
+.venv

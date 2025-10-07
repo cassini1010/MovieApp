@@ -4,6 +4,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 
 class MovieResponse(SQLModel):
+    id: int
     title: str
     releaseYear: int
     summary: str | None
