@@ -68,7 +68,7 @@
       <tbody>
         <tr v-for="movie in movies" :key="movie.id" class="border-b">
           <td class="p-2 border">
-            <img :src="`http://localhost:8000/static/${movie.thumbnail}`" alt="Thumbnail"
+            <img :src="`https://backend.frostick.website/static/${movie.thumbnail}`" alt="Thumbnail"
               class="w-16 h-16 object-cover" style="width: 300px; height: auto; border-radius: 8px;" />
           </td>
           <td class="p-2 border">{{ movie.title }}</td>
@@ -106,7 +106,7 @@ export default {
   },
   methods: {
     async fetchMovies() {
-      const response = await axios.get("http://localhost:8000/movie");
+      const response = await axios.get("https://backend.frostick.website/movie");
       this.movies = response.data;
     },
     onFileChange(event) {
@@ -128,7 +128,7 @@ export default {
         formData.append("thumbnail", this.thumbnailFile);
       }
 
-      await axios.post("http://localhost:8000/movie", formData, {
+      await axios.post("https://backend.frostick.website/movie", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -137,7 +137,7 @@ export default {
       this.fetchMovies(); // refresh list
     },
     async deleteMovie(id) {
-      await axios.delete(`http://localhost:8000/movie/${id}`);
+      await axios.delete(`https://backend.frostick.website/movie/${id}`);
       this.fetchMovies();
     },
   },

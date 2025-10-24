@@ -4,7 +4,7 @@
     <!-- This is for the movie grid view -->
     <div class="movie-grid">
       <div v-for="movie in movies" :key="movie.id" class="movie-card">
-        <img :src="`http://localhost:8000/static/${movie.thumbnail}`" alt="thumbnail" class="thumbnail"
+        <img :src="`https://backend.frostick.website/static/${movie.thumbnail}`" alt="thumbnail" class="thumbnail"
           style="width: 300px; height: auto; border-radius: 8px;" />
         <div class="movie-details">
           <h3 class="title">{{ movie.title }}</h3>
@@ -51,7 +51,7 @@ export default {
         // if (this.filters.director) params.director = this.filters.director;
         // if (this.filters.year) params.year = Number(this.filters.year);
 
-        const response = await axios.get(`http://localhost:8000/movie/`, {
+        const response = await axios.get(`https://backend.frostick.website/movie/`, {
           params: {
             limit: this.limit,
             offset: this.offset
